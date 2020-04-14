@@ -20,8 +20,8 @@ enum Direction {
 // For DMS, there's a degrees, minutes and seconds, assume each can be a 
 // floating-point value and also include a direction
 struct DMSValue {
-    double degrees;
-    double minutes;
+    unsigned int degrees;
+    unsigned int minutes;
     double seconds;
     Direction direction;
 };
@@ -31,6 +31,46 @@ struct DMSPosition {
     DMSValue latitude;
     DMSValue longitude;
 };
+
+/**
+ * @brief Converts DMS position into decimal position.
+ * 
+ * @param dms The DMS position to be converted.
+ * @param decimal The resulting DMS position on success.
+ * @return true If the input was valid and the conversion was successful.
+ * @return false If the input was not valid.
+ */
+bool convertDMSToDecimal(DMSPosition dms, DecimalPosition &decimal) {
+
+    // check positions
+    if (dms.latitude.direction != NORTH && dms.latitude.direction != SOUTH) {
+        return false;
+    }
+    if (dms.longitude.direction != EAST && dms.longitude.direction != WEST) {
+        return false;
+    }
+
+    double latitude, longitude;
+
+    latitude = (double) dms.latitude.degrees + 
+               ((double) dms.latitude.minutes / 60.0) +
+               (dms.latitude.seconds / 3600.0);
+    if (dms.latitude.direction == SOUTH) {
+        latitude *= -1.0;
+    }
+
+    longitude = (double) dms.longitude.degrees +
+                ((double) dms.longitude.minutes / 60.0) +
+                (dms.longitude.seconds / 3600.0);
+    if (dms.longitude.direction == WEST) {
+        longitude *= -1.0;
+    }
+
+    decimal.latitude = latitude;
+    decimal.longitude = longitude;
+
+    return true;
+}
 
 /**
  * @brief Converts the given decimal position to DMS.
@@ -84,11 +124,16 @@ bool convertDecimalToDMS(DecimalPosition decimal, DMSPosition &dms) {
 }
 
 void printDMS(DMSPosition dms) {
-    printf("Latitude = %g %g\' %g\" %s, Longitude = %g %g\' %g\" %s\n",
+    printf("Latitude = %u %u\' %g\" %s, Longitude = %u %u\' %g\" %s\n",
         dms.latitude.degrees, dms.latitude.minutes, dms.latitude.seconds,
         dms.latitude.direction == NORTH ? "N" : "S",
         dms.longitude.degrees, dms.longitude.minutes, dms.longitude.seconds,
         dms.longitude.direction == EAST ? "E" : "W");
+}
+
+void printDecimal(DecimalPosition decimal) {
+    printf("Latitude = %g, Longitude = %g\n", decimal.latitude, 
+        decimal.longitude);
 }
 
 bool testDecToDMS1() {
@@ -108,12 +153,41 @@ bool testDecToDMS1() {
     return true;
 }
 
+bool testDMSToDec1() {
+
+    DMSPosition dms;
+    dms.latitude.direction = NORTH;
+    dms.latitude.degrees = 62;
+    dms.latitude.minutes = 17;
+    dms.latitude.seconds = 41.332;
+    dms.longitude.direction = EAST;
+    dms.longitude.degrees = 124;
+    dms.longitude.minutes = 38;
+    dms.longitude.seconds = 7.332;
+
+    DecimalPosition decimal;
+
+    if (convertDMSToDecimal(dms, decimal) == false) {
+        return false;
+    }
+
+    printDecimal(decimal);
+
+    return true;
+}
+
 int main(int argc, char *argv[]) {
 
     if (testDecToDMS1() == true) {
         printf("DecToDMS Test 1 PASSED\n");
     } else {
         printf("DecToDMS Test 1 FAILED\n");
+    }
+
+    if (testDMSToDec1() == true) {
+        printf("DMSToDec Test 1 PASSED\n");
+    } else {
+        printf("DMSToDec Test 1 FAILED\n");
     }
 
     return 0;
