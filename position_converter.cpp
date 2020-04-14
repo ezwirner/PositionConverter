@@ -55,10 +55,10 @@ struct DMSPosition {
 bool convertDMSToDecimal(DMSPosition dms, DecimalPosition &decimal) {
 
     // check positions
-    if (dms.latitude.direction != NORTH && dms.latitude.direction != SOUTH) {
-        return false;
-    }
-    if (dms.longitude.direction != EAST && dms.longitude.direction != WEST) {
+    if (dms.latitude.direction != NORTH && dms.latitude.direction != SOUTH ||
+        dms.longitude.direction != EAST && dms.longitude.direction != WEST) {
+        decimal.latitude = 0.0;
+        decimal.longitude = 0.0;
         return false;
     }
 
@@ -96,10 +96,16 @@ bool convertDMSToDecimal(DMSPosition dms, DecimalPosition &decimal) {
 bool convertDecimalToDMS(DecimalPosition decimal, DMSPosition &dms) {
 
     // check the inputs
-    if (decimal.latitude > 90.0 || decimal.latitude < -90.0) {
-        return false;
-    }
-    if (decimal.longitude > 180.0 || decimal.longitude < -180.0) {
+    if (decimal.latitude > 90.0 || decimal.latitude < -90.0 ||
+        decimal.longitude > 180.0 || decimal.longitude < -180.0) {
+        dms.latitude.direction = NORTH;
+        dms.latitude.degrees = 0;
+        dms.latitude.minutes = 0;
+        dms.latitude.seconds = 0.0;
+        dms.longitude.direction = EAST;
+        dms.longitude.degrees = 0;
+        dms.longitude.minutes = 0;
+        dms.longitude.seconds = 0.0;
         return false;
     }
 
@@ -165,6 +171,16 @@ bool testDecToDMS1() {
     return true;
 }
 
+bool rangeCheckDecimal(DecimalPosition decimal) {
+
+    if (decimal.latitude < -90.0 || decimal.latitude > 90.0 ||
+        decimal.longitude < -180.0 || decimal.longitude > 180.0) {
+        return false;
+    }
+
+    return true;
+}
+
 bool testDMSToDec1() {
 
     DMSPosition dms;
@@ -220,23 +236,15 @@ bool runRapidCheckTests() {
 
     printf("\n*** RUNNING RapidCheck TESTS\n\n");
 
-    DMSPosition dms;
     rc::check("Checking valid degrees", 
               [](double degrees) {
                   DMSPosition dms;
                   dms.latitude.degrees = (unsigned int) degrees;
                   dms.longitude.degrees = (unsigned int) degrees;
                   DecimalPosition decimal;
-                  if (convertDMSToDecimal(dms, decimal) == true) {
-printf("%g, %g\n", decimal.latitude, decimal.longitude);
-                    RC_ASSERT(decimal.latitude >= -90.0 &&
-                              decimal.latitude <= 90.0 &&
-                              decimal.longitude >= -180.0 &&
-                              decimal.longitude <= 180.0);
-                  } else {
-printf("%g, %g INVALID\n", decimal.latitude, decimal.longitude);
-                  }
-                  return true;
+                  RC_PRE(convertDMSToDecimal(dms, decimal) == true);
+                  printf("%g, %g\n", decimal.latitude, decimal.longitude);
+                  RC_ASSERT(rangeCheckDecimal(decimal) == true);
               });
 
     return true;
