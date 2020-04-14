@@ -84,7 +84,7 @@ bool convertDecimalToDMS(DecimalPosition decimal, DMSPosition &dms) {
 }
 
 void printDMS(DMSPosition dms) {
-    printf("Latitude = %g_%g_%g_%s, Longitude = %g_%g_%g_%s\n",
+    printf("Latitude = %g %g\' %g\" %s, Longitude = %g %g\' %g\" %s\n",
         dms.latitude.degrees, dms.latitude.minutes, dms.latitude.seconds,
         dms.latitude.direction == NORTH ? "N" : "S",
         dms.longitude.degrees, dms.longitude.minutes, dms.longitude.seconds,
