@@ -157,8 +157,8 @@ bool convertDecimalToDMS(DecimalPosition decimal, DMSPosition &dms) {
  *        ranges.
  * 
  * @param decimal The decimal position to be checked.
- * @return true True if the entire position is valid.
- * @return false False if any element of the position is not valid.
+ * @return true If the entire position is valid.
+ * @return false If any element of the position is not valid.
  */
 bool rangeCheckDecimal(DecimalPosition decimal) {
 
@@ -173,9 +173,16 @@ bool rangeCheckDecimal(DecimalPosition decimal) {
     return true;
 }
 
+/**
+ * @brief Checks a DMS position to ensure that all elements are in valid ranges.
+ * 
+ * @param dms The DMS position to be checked.
+ * @return true If the entire position is valid.
+ * @return false If any element of the position is not valid.
+*/
 bool rangeCheckDMS(DMSPosition dms) {
 
-    if (dms.latitude.degrees > 90 || dms.longitude.degrees > 90) { 
+    if (dms.latitude.degrees > 90 || dms.longitude.degrees > 180) { 
         return false;
     }
 
@@ -293,7 +300,7 @@ bool runRapidCheckTests() {
 
     printf("\n*** RUNNING RapidCheck TESTS\n\n");
 
-    rc::check("Checking valid degrees", 
+    rc::check("Checking convertDMSToDecimal", 
               [](double degrees1, double degrees2) {
                   DMSPosition dms;
                   dms.latitude.degrees = (unsigned int) degrees1;
@@ -305,6 +312,18 @@ bool runRapidCheckTests() {
                   printf("Output:  %g, %g\n", decimal.latitude, decimal.longitude);
                   RC_ASSERT(rangeCheckDecimal(decimal) == true);
               });
+
+    rc::check("Checking convertDecimalToDMS",
+        [](double degrees1, double degrees2) {
+            DecimalPosition decimal;
+            decimal.latitude = degrees1;
+            decimal.longitude = degrees2;
+            DMSPosition dms;
+            bool status = convertDecimalToDMS(decimal, dms);
+            RC_PRE(status == true);
+            printf("Output:  %g, %g\n", decimal.latitude, decimal.longitude);
+            RC_ASSERT(rangeCheckDMS(dms) == true);
+           });
 
     return true;
 }
