@@ -162,25 +162,47 @@ bool convertDecimalToDMS(DecimalPosition decimal, DMSPosition &dms) {
  */
 bool rangeCheckDecimal(DecimalPosition decimal) {
 
-    bool show = true;
-
     if (decimal.latitude < -90.0 || decimal.latitude > 90.0) {
-        if (show) {
-            printf("decimal.latitude = %g\n", decimal.latitude);
-        }
         return false;
     }
 
     if (decimal.longitude < -180.0 || decimal.longitude > 180.0) {
-        if (show) {
-            printf("decimal.longitude = %g\n", decimal.longitude);
-        }
         return false;
     }
 
     return true;
 }
 
+bool rangeCheckDMS(DMSPosition dms) {
+
+    if (dms.latitude.degrees > 90 || dms.longitude.degrees > 90) { 
+        return false;
+    }
+
+    if (dms.latitude.minutes >= 60 || dms.longitude.minutes >= 60) {
+        return false;
+    }
+
+    if (dms.latitude.seconds >= 60.0 || dms.longitude.seconds >= 60.0) {
+        return false;
+    }
+
+    if (dms.latitude.direction != NORTH && dms.latitude.direction != SOUTH) {
+        return false;
+    }
+
+    if (dms.longitude.direction != EAST && dms.longitude.direction != WEST) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * @brief Prints out a DMS value into human readable format.
+ * 
+ * @param dms The DMSPosition value to be printed.
+ */
 void printDMS(DMSPosition dms) {
     printf("Latitude = %u %u\' %g\" %s, Longitude = %u %u\' %g\" %s\n",
         dms.latitude.degrees, dms.latitude.minutes, dms.latitude.seconds,
@@ -189,6 +211,11 @@ void printDMS(DMSPosition dms) {
         dms.longitude.direction == EAST ? "E" : "W");
 }
 
+/**
+ * @brief Prints out a decimal value in human readable format.
+ * 
+ * @param decimal The DecimalPosition value to be printed.
+ */
 void printDecimal(DecimalPosition decimal) {
     printf("Latitude = %g, Longitude = %g\n", decimal.latitude, 
         decimal.longitude);
@@ -267,14 +294,15 @@ bool runRapidCheckTests() {
     printf("\n*** RUNNING RapidCheck TESTS\n\n");
 
     rc::check("Checking valid degrees", 
-              [](double degrees) {
+              [](double degrees1, double degrees2) {
                   DMSPosition dms;
-                  dms.latitude.degrees = (unsigned int) degrees;
-                  dms.longitude.degrees = (unsigned int) degrees;
+                  dms.latitude.degrees = (unsigned int) degrees1;
+                  dms.longitude.degrees = (unsigned int) degrees2;
                   DecimalPosition decimal;
                   bool status = convertDMSToDecimal(dms, decimal);
+                  printf("Input:  %g, %g\n", degrees1, degrees2);
                   RC_PRE(status == true);
-                  printf("%g, %g status=%s\n", decimal.latitude, decimal.longitude, status == true ? "true" : "false");
+                  printf("Output:  %g, %g\n", decimal.latitude, decimal.longitude);
                   RC_ASSERT(rangeCheckDecimal(decimal) == true);
               });
 
