@@ -176,18 +176,34 @@ bool testDMSToDec1() {
     return true;
 }
 
-int main(int argc, char *argv[]) {
+bool runTests() {
+
+    unsigned int fails = 0;
 
     if (testDecToDMS1() == true) {
         printf("DecToDMS Test 1 PASSED\n");
     } else {
         printf("DecToDMS Test 1 FAILED\n");
+        fails++;
     }
 
     if (testDMSToDec1() == true) {
         printf("DMSToDec Test 1 PASSED\n");
     } else {
         printf("DMSToDec Test 1 FAILED\n");
+        fails++;
+    }
+
+    return fails == 0 ? true : false;
+}
+
+int main(int argc, char *argv[]) {
+
+    // USE THIS TEST CODE OR REPLACE IT WITH ANY OTHER!
+    if (runTests() == false) {
+        printf ("TESTS FAILED!\n");
+    } else {
+        printf("All tests passed.\n");
     }
 
     return 0;
