@@ -300,32 +300,36 @@ bool runRapidCheckTests() {
 
     printf("\n*** RUNNING RapidCheck TESTS\n\n");
 
-    rc::check("Checking convertDMSToDecimal", 
-              [](double degrees1, double degrees2) {
-                  DMSPosition dms;
-                  dms.latitude.degrees = (unsigned int) degrees1;
-                  dms.longitude.degrees = (unsigned int) degrees2;
-                  DecimalPosition decimal;
-                  bool status = convertDMSToDecimal(dms, decimal);
-                  printf("Input:  %g, %g\n", degrees1, degrees2);
-                  RC_PRE(status == true);
-                  printf("Output:  %g, %g\n", decimal.latitude, decimal.longitude);
-                  RC_ASSERT(rangeCheckDecimal(decimal) == true);
-              });
+    unsigned int fails = 0;
 
-    rc::check("Checking convertDecimalToDMS",
+    if (rc::check("Checking convertDMSToDecimal", 
+        [](double degrees1, double degrees2) {
+            DMSPosition dms;
+            dms.latitude.degrees = (unsigned int) degrees1;
+            dms.longitude.degrees = (unsigned int) degrees2;
+            DecimalPosition decimal;
+            bool status = convertDMSToDecimal(dms, decimal);
+            printf("Input:  %g, %g\n", degrees1, degrees2);
+            if (status == true) {
+                printf("Output:  %g, %g\n", decimal.latitude, decimal.longitude);
+                RC_ASSERT(rangeCheckDecimal(decimal) == true);
+            }
+        }) == false) { fails++; };
+
+    if (rc::check("Checking convertDecimalToDMS",
         [](double degrees1, double degrees2) {
             DecimalPosition decimal;
             decimal.latitude = degrees1;
             decimal.longitude = degrees2;
             DMSPosition dms;
             bool status = convertDecimalToDMS(decimal, dms);
-            RC_PRE(status == true);
-            printf("Output:  %g, %g\n", decimal.latitude, decimal.longitude);
-            RC_ASSERT(rangeCheckDMS(dms) == true);
-           });
+            if (status == true) {
+                printf("Output:  %g, %g\n", decimal.latitude, decimal.longitude);
+                RC_ASSERT(rangeCheckDMS(dms) == true);
+            }
+        }) == false) { fails++; };
 
-    return true;
+    return fails == 0 ? true : false;
 }
 
 int main(int argc, char *argv[]) {
