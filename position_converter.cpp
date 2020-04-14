@@ -6,15 +6,20 @@
 struct DecimalPosition {
     double latitude;
     double longitude;
+
+    DecimalPosition() {
+        latitude = 0.0;
+        longitude = 0.0;
+    }
 };
 
 // For DMS positions, this is direction. Only half of the following values 
 // apply depending on whether it's a longitude or a latitude.
 enum Direction {
-    NORTH,      // applies to latitude
-    SOUTH,      // applies to latitude
-    EAST,       // applies to longitude
-    WEST        // applies to longitude
+    NORTH = 0,      // applies to latitude
+    SOUTH = 1,      // applies to latitude
+    EAST = 0,       // applies to longitude
+    WEST = 1        // applies to longitude
 };
 
 // For DMS, there's a degrees, minutes and seconds, assume each can be a 
@@ -24,6 +29,13 @@ struct DMSValue {
     unsigned int minutes;
     double seconds;
     Direction direction;
+
+    DMSValue() {
+        degrees = 0;
+        minutes = 0;
+        seconds = 0.0;
+        direction = NORTH;
+    }
 };
 
 // This is the complete DMS location, which contains a latitude and a longitude
@@ -180,6 +192,8 @@ bool runTests() {
 
     unsigned int fails = 0;
 
+    printf("\n*** RUNNING STATIC TESTS\n\n");
+
     if (testDecToDMS1() == true) {
         printf("DecToDMS Test 1 PASSED\n");
     } else {
@@ -197,13 +211,49 @@ bool runTests() {
     return fails == 0 ? true : false;
 }
 
+#include <rapidcheck.h>
+#include <rapidcheck/state.h>
+
+using namespace rc;
+
+bool runRapidCheckTests() {
+
+    printf("\n*** RUNNING RapidCheck TESTS\n\n");
+
+    DMSPosition dms;
+    rc::check("Checking valid degrees", 
+              [](double degrees) {
+                  DMSPosition dms;
+                  dms.latitude.degrees = (unsigned int) degrees;
+                  dms.longitude.degrees = (unsigned int) degrees;
+                  DecimalPosition decimal;
+                  if (convertDMSToDecimal(dms, decimal) == true) {
+printf("%g, %g\n", decimal.latitude, decimal.longitude);
+                    RC_ASSERT(decimal.latitude >= -90.0 &&
+                              decimal.latitude <= 90.0 &&
+                              decimal.longitude >= -180.0 &&
+                              decimal.longitude <= 180.0);
+                  } else {
+printf("%g, %g INVALID\n", decimal.latitude, decimal.longitude);
+                  }
+                  return true;
+              });
+
+    return true;
+}
+
 int main(int argc, char *argv[]) {
 
-    // USE THIS TEST CODE OR REPLACE IT WITH ANY OTHER!
     if (runTests() == false) {
         printf ("TESTS FAILED!\n");
     } else {
         printf("All tests passed.\n");
+    }
+
+    if (runRapidCheckTests() == false) {
+        printf("RapidCheck TESTS FAILED!\n");
+    } else {
+        printf("All RapidCheck tests passed.\n");
     }
 
     return 0;
